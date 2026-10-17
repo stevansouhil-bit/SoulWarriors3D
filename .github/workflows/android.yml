@@ -66,6 +66,16 @@ jobs:
       - name: Validate project
         run: godot --headless --path godot_game --editor --quit
 
+      - name: Run game scene smoke test
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path godot_game --quit-after 10 2>&1 | tee /tmp/game-test.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" /tmp/game-test.log; then
+            echo "Game scene test detected a script error."
+            exit 1
+          fi
+
       - name: Export APK
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey

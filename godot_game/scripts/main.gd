@@ -86,51 +86,157 @@ func create_world() -> void:
     add_child(fill)
 
 func create_arena() -> void:
-    add_box(self, Vector3(30, 0.4, 30), Vector3(0, -0.25, 0),
-        Color(0.12, 0.14, 0.21))
+    # Large stone plaza and central road.
+    add_box(self, Vector3(48, 0.5, 58), Vector3(0, -0.28, -5),
+        Color(0.43, 0.43, 0.47))
 
-    # Stone tiles and glowing arena lines.
+    add_box(self, Vector3(4.6, 0.06, 52), Vector3(0, 0.005, -5),
+        Color(0.63, 0.61, 0.59))
+
+    # Stone road tiles.
+    for z in range(-29, 21, 2):
+        add_box(self, Vector3(4.45, 0.025, 0.055),
+            Vector3(0, 0.045, float(z)), Color(0.34, 0.35, 0.40))
+
+    # Keep the original central combat area clear.
     for x in range(-12, 13, 3):
-        add_box(self, Vector3(0.025, 0.012, 25),
-            Vector3(x, -0.035, 0), Color(0.15, 0.22, 0.36))
+        add_box(self, Vector3(0.025, 0.012, 24),
+            Vector3(float(x), 0.015, 0), Color(0.23, 0.29, 0.40))
     for z in range(-12, 13, 3):
-        add_box(self, Vector3(25, 0.012, 0.025),
-            Vector3(0, -0.03, z), Color(0.17, 0.22, 0.34))
+        add_box(self, Vector3(24, 0.012, 0.025),
+            Vector3(0, 0.016, float(z)), Color(0.23, 0.29, 0.40))
 
+    # Water canals on both sides of the road.
     for side in [-1.0, 1.0]:
-        for i in range(4):
-            var z := -9.0 + float(i) * 6.0
-            add_box(self, Vector3(0.75, 3.2, 0.75),
-                Vector3(side * 10.0, 1.4, z), Color(0.10, 0.09, 0.18))
-            add_box(self, Vector3(1.0, 0.16, 1.0),
-                Vector3(side * 10.0, 3.05, z),
-                Color(0.08, 0.78, 1.0), true)
+        add_box(self, Vector3(1.45, 0.055, 43),
+            Vector3(side * 6.8, -0.005, -5), Color(0.08, 0.36, 0.53))
+        add_box(self, Vector3(0.22, 0.18, 44),
+            Vector3(side * 7.65, 0.025, -5), Color(0.55, 0.53, 0.49))
 
-    # Japanese-inspired buildings around the fighting plaza.
-    for i in range(6):
-        var z := -12.0 + float(i) * 4.8
-        for side in [-1.0, 1.0]:
-            var x := side * (12.0 + float(i % 2))
-            var h := 3.5 + float(i % 3) * 1.2
-            add_box(self, Vector3(3.5, h, 3.2),
-                Vector3(x, h / 2.0, z),
-                Color(0.16, 0.12, 0.19))
-            add_box(self, Vector3(4.1, 0.28, 3.8),
-                Vector3(x, h + 0.12, z),
-                Color(0.055, 0.07, 0.13))
-            add_box(self, Vector3(0.12, h * 0.65, 0.08),
-                Vector3(x, h * 0.55, z - 1.63),
-                Color(0.85, 0.23, 0.12), true)
+        # Small bridges over each canal.
+        for bridge_z in [-12.0, 0.0, 10.0]:
+            add_box(self, Vector3(2.15, 0.16, 2.0),
+                Vector3(side * 6.8, 0.075, bridge_z),
+                Color(0.66, 0.60, 0.52))
 
-    # Decorative lanterns.
+        # Outer defensive walls.
+        add_box(self, Vector3(0.7, 5.2, 48),
+            Vector3(side * 18.0, 2.6, -5), Color(0.72, 0.70, 0.66))
+        add_box(self, Vector3(1.0, 0.32, 48),
+            Vector3(side * 18.0, 5.25, -5), Color(0.24, 0.25, 0.31))
+
+        # Traditional Japanese houses along the street.
+        for house_z in [-17.0, -10.0, -3.0, 5.0, 12.0]:
+            add_japanese_house(
+                Vector3(side * 11.0, 0, house_z),
+                3.6, 2.5, 3.8
+            )
+
+        # Cherry blossom trees.
+        for tree_z in [-20.0, -13.0, -6.0, 2.0, 10.0, 16.0]:
+            add_cherry_tree(Vector3(side * 14.7, 0, tree_z), 1.35)
+
+        # Warm lanterns along the plaza.
+        for lamp_z in [-15.0, -7.0, 1.0, 9.0, 16.0]:
+            add_box(self, Vector3(0.16, 1.9, 0.16),
+                Vector3(side * 5.3, 0.95, lamp_z),
+                Color(0.19, 0.15, 0.13))
+            add_box(self, Vector3(0.65, 0.58, 0.55),
+                Vector3(side * 5.3, 1.95, lamp_z),
+                Color(1.0, 0.65, 0.28), true)
+
+    # Grand castle gate at the far end of the road.
+    add_box(self, Vector3(8.5, 3.2, 2.0),
+        Vector3(0, 1.6, -20.5), Color(0.79, 0.77, 0.71))
+    add_box(self, Vector3(3.2, 2.2, 0.35),
+        Vector3(0, 1.0, -19.35), Color(0.12, 0.13, 0.17))
+    add_box(self, Vector3(10.0, 0.3, 3.2),
+        Vector3(0, 3.25, -20.5), Color(0.18, 0.19, 0.25))
+    var gate_roof_left := add_box(self, Vector3(5.7, 0.22, 2.2),
+        Vector3(-2.4, 3.55, -20.5), Color(0.16, 0.17, 0.23))
+    gate_roof_left.rotation_degrees.z = -8
+    var gate_roof_right := add_box(self, Vector3(5.7, 0.22, 2.2),
+        Vector3(2.4, 3.55, -20.5), Color(0.16, 0.17, 0.23))
+    gate_roof_right.rotation_degrees.z = 8
+
+    # Multi-level Japanese castle silhouette.
+    add_box(self, Vector3(9.0, 3.1, 5.2),
+        Vector3(0, 1.55, -27.0), Color(0.79, 0.78, 0.74))
+    add_box(self, Vector3(10.0, 0.24, 5.8),
+        Vector3(0, 3.15, -27.0), Color(0.16, 0.18, 0.25))
+
+    add_box(self, Vector3(6.7, 2.4, 4.4),
+        Vector3(0, 4.35, -27.0), Color(0.82, 0.80, 0.75))
+    add_box(self, Vector3(7.8, 0.22, 5.0),
+        Vector3(0, 5.6, -27.0), Color(0.15, 0.17, 0.24))
+
+    add_box(self, Vector3(4.6, 2.0, 3.4),
+        Vector3(0, 6.7, -27.0), Color(0.84, 0.82, 0.77))
+    add_box(self, Vector3(5.8, 0.22, 4.0),
+        Vector3(0, 7.75, -27.0), Color(0.14, 0.16, 0.23))
+
+    add_box(self, Vector3(2.8, 1.35, 2.5),
+        Vector3(0, 8.5, -27.0), Color(0.83, 0.81, 0.76))
+    add_box(self, Vector3(3.8, 0.22, 3.1),
+        Vector3(0, 9.25, -27.0), Color(0.14, 0.16, 0.23))
+    add_box(self, Vector3(0.22, 1.0, 0.22),
+        Vector3(0, 9.85, -27.0), Color(0.91, 0.72, 0.34), true)
+
+func add_japanese_house(pos: Vector3, width: float,
+        height: float, depth: float) -> void:
+    # Raised foundation and timber-framed walls.
+    add_box(self, Vector3(width + 0.25, 0.25, depth + 0.25),
+        pos + Vector3(0, 0.12, 0), Color(0.31, 0.30, 0.31))
+    add_box(self, Vector3(width, height, depth),
+        pos + Vector3(0, height * 0.5 + 0.24, 0),
+        Color(0.73, 0.66, 0.55))
+
+    # Dark sloping roof panels.
+    var roof_y := height + 0.55
+    var roof_left := add_box(self,
+        Vector3(width + 0.8, 0.20, depth * 0.62),
+        pos + Vector3(0, roof_y, -depth * 0.19),
+        Color(0.15, 0.17, 0.23))
+    roof_left.rotation_degrees.x = -24
+    var roof_right := add_box(self,
+        Vector3(width + 0.8, 0.20, depth * 0.62),
+        pos + Vector3(0, roof_y, depth * 0.19),
+        Color(0.15, 0.17, 0.23))
+    roof_right.rotation_degrees.x = 24
+
+    # Front door and glowing windows.
+    add_box(self, Vector3(0.75, 1.45, 0.09),
+        pos + Vector3(0, 0.97, depth * 0.5 + 0.055),
+        Color(0.25, 0.15, 0.12))
     for side in [-1.0, 1.0]:
-        for i in range(3):
-            var z := -6.0 + float(i) * 6.0
-            add_box(self, Vector3(0.12, 1.8, 0.12),
-                Vector3(side * 8.0, 0.9, z), Color(0.10, 0.10, 0.16))
-            add_box(self, Vector3(0.65, 0.55, 0.55),
-                Vector3(side * 8.0, 1.75, z),
-                Color(0.1, 0.58, 1.0), true)
+        add_box(self, Vector3(0.48, 0.62, 0.08),
+            pos + Vector3(side * width * 0.29, height * 0.63,
+                depth * 0.5 + 0.06), Color(1.0, 0.72, 0.39), true)
+        add_box(self, Vector3(0.06, 0.72, 0.09),
+            pos + Vector3(side * width * 0.29, height * 0.63,
+                depth * 0.5 + 0.11), Color(0.23, 0.16, 0.13))
+
+func add_cherry_tree(pos: Vector3, size: float) -> void:
+    # Brown trunk.
+    add_box(self, Vector3(0.25 * size, 1.65 * size, 0.25 * size),
+        pos + Vector3(0, 0.82 * size, 0), Color(0.28, 0.17, 0.13))
+
+    # Pink blossom clusters.
+    var pinks := [
+        Color(1.0, 0.61, 0.76),
+        Color(1.0, 0.73, 0.83),
+        Color(0.91, 0.46, 0.66)
+    ]
+    var offsets := [
+        Vector3(0, 1.7, 0),
+        Vector3(0.65, 1.5, 0.15),
+        Vector3(-0.65, 1.5, -0.1),
+        Vector3(0.25, 2.0, -0.35),
+        Vector3(-0.25, 1.95, 0.35)
+    ]
+    for i in range(offsets.size()):
+        add_sphere(self, pos + offsets[i] * size,
+            0.53 * size, pinks[i % pinks.size()])
 
 func create_fighter(title: String, pos: Vector3,
         robe_color: Color, hair_color: Color) -> Node3D:
