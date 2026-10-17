@@ -18,16 +18,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check Godot
-        run: godot --version
-
-      - name: Validate project
+      - name: Prepare Android build environment
+        shell: bash
         run: |
-          godot --headless --path godot_game --editor --quit
+          apt-get update
+          apt-get install -y fontconfig
 
-      - name: Configure Android signing
-        run: |
-          mkdir -p "$HOME/.android"
+          export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/lib/android-sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME/bin" >> "$GITHUB_PATH"
+
+          java -version
+          test -d "$ANDROID_HOME" || {
+            echo "Android SDK directory not found: $ANDROID_HOME"
+            exit 1
+          }
+
+          TEMPLATE="$(find /root/.local/share/godot/export_templates /github/home/.local/share/godot/export_templates -type f -name android_debug.apk 2>/dev/null | head -n 1)"
+          if [ -z "$TEMPLATE" ]; then
+            echo "Android export templates are missing."
+            exit 1
+          fi
+
+          SOURCE="${TEMPLATE%/android_debug.apk}"
+          DEST="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$DEST"
+          if [ "$SOURCE" != "$DEST" ]; then
+            cp -a "$SOURCE/." "$DEST/"
+          fi
+
+          mkdir -p "$HOME/.config/godot" "$HOME/.android"
+
           keytool -genkeypair \
             -keystore "$HOME/.android/debug.keystore" \
             -storepass android \
@@ -36,15 +63,26 @@ jobs:
             -dname "CN=Android Debug,O=Android,C=US" \
             -keyalg RSA -keysize 2048 -validity 10000
 
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<SETTINGS
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          SETTINGS
+
+      - name: Validate project
+        run: godot --headless --path godot_game --editor --quit
+
       - name: Export APK
         env:
-          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /root/.android/debug.keystore
           GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/.android/debug.keystore"
           mkdir -p godot_game/build
           godot --headless --path godot_game \
-            --export-debug "Android" godot_game/build/SoulWarriors3D.apk
+            --export-debug "Android" build/SoulWarriors3D.apk
           test -s godot_game/build/SoulWarriors3D.apk
 
       - name: Upload APK
