@@ -1,6 +1,7 @@
 extends Node3D
 
 var player: Node3D
+var battle_camera: Camera3D
 var enemy: Node3D
 var player_hp := 100
 var enemy_hp := 100
@@ -306,6 +307,7 @@ func create_camera() -> void:
     cam.current = true
     cam.fov = 58.0
     add_child(cam)
+    battle_camera = cam
     cam.look_at(Vector3(0, 1.0, 0), Vector3.UP)
 
 func create_ui() -> void:
@@ -439,6 +441,14 @@ func _process(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     energy_cooldown = maxf(0.0, energy_cooldown - delta)
     enemy_cooldown = maxf(0.0, enemy_cooldown - delta)
+
+    # Smooth third-person camera follow.
+    if is_instance_valid(player) and is_instance_valid(battle_camera):
+        var target_camera := player.global_position + Vector3(0, 9.5, 15.5)
+        battle_camera.global_position = battle_camera.global_position.lerp(
+            target_camera, clampf(delta * 3.0, 0.0, 1.0))
+        battle_camera.look_at(
+            player.global_position + Vector3(0, 1.0, -1.5), Vector3.UP)
 
     if finished or not is_instance_valid(player) or not is_instance_valid(enemy):
         return
