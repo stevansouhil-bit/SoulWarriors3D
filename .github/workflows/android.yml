@@ -76,6 +76,7 @@ jobs:
           godot --headless --path godot_game \
             --export-debug "Android" build/SoulWarriors3D.apk
           test -s godot_game/build/SoulWarriors3D.apk
+          unzip -t godot_game/build/SoulWarriors3D.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
