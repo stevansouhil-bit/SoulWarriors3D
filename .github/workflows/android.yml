@@ -1,0 +1,55 @@
+name: Build Soul Warriors 3D APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.7.2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Godot
+        run: godot --version
+
+      - name: Validate project
+        run: |
+          godot --headless --path godot_game --editor --quit
+
+      - name: Configure Android signing
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA -keysize 2048 -validity 10000
+
+      - name: Export APK
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /root/.android/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          mkdir -p godot_game/build
+          godot --headless --path godot_game \
+            --export-debug "Android" godot_game/build/SoulWarriors3D.apk
+          test -s godot_game/build/SoulWarriors3D.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoulWarriors3D-APK
+          path: godot_game/build/SoulWarriors3D.apk
+          if-no-files-found: error
